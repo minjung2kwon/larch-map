@@ -1,97 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <title>Leaflet Route with Animation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <meta charset="utf-8">
+  <title>Leaflet 트레킹 지도</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <style>
     #map {
-      height: 100vh;
-      margin: 0;
+      height: 500px;
+      width: 100%;
+    }
+    .leaflet-control-attribution {
+      font-size: 11px;
     }
   </style>
 </head>
 <body>
+  <h3>⛰ 라치밸리 트레일</h3>
   <div id="map"></div>
 
-  <!-- Leaflet -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- SnakeAnim 직접 포함 -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
-    // Polyline SnakeAnim 플러그인 코드 (https://github.com/IvanSanchez/Leaflet.Polyline.SnakeAnim)
-    (function () {
-      if (!L.Polyline) return;
+    const map = L.map('map').setView([51.33, -116.2], 13);
 
-      L.Polyline.include({
-        _snakeLatLngs: [],
-        _snakeIdx: 0,
-        _snakeProgress: 0,
-        _snakeTimer: 0,
-        _snakeSpeed: 200,
-
-        snakeIn: function () {
-          this._snakeLatLngs = this._latlngs;
-          this._snakeIdx = 1;
-          this._snakeProgress = 0;
-          this.setLatLngs([this._snakeLatLngs[0]]);
-          this._snake();
-        },
-
-        _snake: function () {
-          if (this._snakeIdx >= this._snakeLatLngs.length) return;
-
-          const current = this._snakeLatLngs[this._snakeIdx - 1];
-          const next = this._snakeLatLngs[this._snakeIdx];
-          const lat = current.lat + (next.lat - current.lat) * this._snakeProgress;
-          const lng = current.lng + (next.lng - current.lng) * this._snakeProgress;
-
-          const latlng = new L.LatLng(lat, lng);
-          const latlngs = this.getLatLngs();
-          latlngs.push(latlng);
-          this.setLatLngs(latlngs);
-
-          this._snakeProgress += 0.05;
-
-          if (this._snakeProgress >= 1) {
-            this._snakeProgress = 0;
-            this._snakeIdx++;
-          }
-
-          this._snakeTimer = setTimeout(this._snake.bind(this), 30);
-        }
-      });
-    })();
-  </script>
-
-  <!-- 지도 코드 -->
-  <script>
-    const map = L.map("map").setView([51.33, -116.2], 8);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // 기본 타일 + 저작권 표기
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    fetch(
-      "https://dl.dropboxusercontent.com/scl/fi/52ny1so7ft1ud7nhk4pry/route.json?rlkey=w34yvo9jtxhw0jln3kilqn12c&st=j2367jlt"
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        const coords = data.features[0].geometry.coordinates.map(
-          (c) => [c[1], c[0]]
-        );
-
-        const line = L.polyline(coords, {
-          color: "orange",
+    // GeoJSON 경로 불러오기
+    fetch("https://dl.dropboxusercontent.com/scl/fi/52ny1so7ft1ud7nhk4pry/route.json?rlkey=w34yvo9jtxhw0jln3kilqn12c&st=j2367jlt")
+      .then(res => res.json())
+      .then(data => {
+        const coords = data.features[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        
+        // 노란 경로 선
+        const polyline = L.polyline(coords, {
+          color: 'gold',
           weight: 4
         }).addTo(map);
 
-        line.snakeIn(); // 🐍 애니메이션 시작!
+        // 동그라미 마커 초기화
+        const circle = L.circleMarker(coords[0], {
+          radius: 6,
+          color: 'red',
+          fillColor: 'red',
+          fillOpacity: 1
+        }).addTo(map);
+
+        let index = 0;
+        function animate() {
+          index = (index + 1) % coords.length;
+          circle.setLatLng(coords[index]);
+        }
+
+        setInterval(animate, 100); // 100ms 간격으로 이동
       });
   </script>
 </body>
