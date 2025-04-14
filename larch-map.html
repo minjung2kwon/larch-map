@@ -1,18 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <title>Mapbox 테스트</title>
+  <meta charset="UTF-8" />
+  <title>Larch Valley Trail Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <style>
-    #map { width: 100%; height: 400px; }
+    body { margin: 0; padding: 0; }
+    #map { width: 100%; height: 100vh; }
   </style>
 </head>
 <body>
   <div id="map"></div>
+
   <script>
-    mapboxgl.accessToken = '토큰';
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2FuYmFyYWdpIiwiYSI6ImNtOWNlMHJ5dDAydXAya3I3NmtoNzFocWQifQ.xOONAcpwqZe48Xx5JRQd1Q';
+
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/outdoors-v12',
@@ -20,19 +24,82 @@
       zoom: 13
     });
 
-    map.on('load', () => {
-      fetch('https://dl.dropboxusercontent.com/scl/fi/52ny1so7ft1ud7nhk4pry/route.json?...')
-        .then(res => res.json())
-        .then(data => {
-          map.addSource('trail', { type: 'geojson', data });
-          map.addLayer({
-            id: 'trail-line',
-            type: 'line',
-            source: 'trail',
-            paint: { 'line-color': '#FFD700', 'line-width': 4 }
-          });
-        });
+    const geojson = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: [  // 이 안에 실제 좌표 넣어주세요
+              [-116.18155, 51.32814],
+              [-116.18161, 51.32803],
+              [-116.18212, 51.3276],
+              [-116.18256, 51.32734],
+              [-116.18282, 51.32719],
+              [-116.18293, 51.32712],
+              [-116.18299, 51.32709],
+              [-116.18302, 51.32699],
+              [-116.18308, 51.32689],
+              [-116.18328, 51.32675],
+              // ... 중간 생략 가능 ...
+              [-116.22197, 51.34039]
+            ]
+          }
+        }
+      ]
+    };
+
+    let coords = geojson.features[0].geometry.coordinates;
+    let marker;
+    let index = 0;
+    let forward = true;
+
+    map.on("load", () => {
+      // 트레일 선 추가
+      map.addSource("larch-trail", {
+        type: "geojson",
+        data: geojson
+      });
+
+      map.addLayer({
+        id: "larch-trail-line",
+        type: "line",
+        source: "larch-trail",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#FFD700",
+          "line-width": 4
+        }
+      });
+
+      // 마커 초기화
+      marker = new mapboxgl.Marker({ color: "#FF4500" })
+        .setLngLat(coords[0])
+        .addTo(map);
+
+      animateMarker();
     });
+
+    function animateMarker() {
+      if (!coords.length) return;
+
+      marker.setLngLat(coords[index]);
+
+      if (forward) {
+        index++;
+        if (index >= coords.length - 1) forward = false;
+      } else {
+        index--;
+        if (index <= 0) forward = true;
+      }
+
+      setTimeout(animateMarker, 100); // ← 느리게 0.1초 간격
+    }
   </script>
 </body>
 </html>
