@@ -10,9 +10,6 @@
       height: 500px;
       width: 100%;
     }
-    .leaflet-control-attribution {
-      font-size: 11px;
-    }
   </style>
 </head>
 <body>
@@ -32,29 +29,32 @@
     fetch("https://dl.dropboxusercontent.com/scl/fi/52ny1so7ft1ud7nhk4pry/route.json?rlkey=w34yvo9jtxhw0jln3kilqn12c&st=j2367jlt")
       .then(res => res.json())
       .then(data => {
-        const coords = data.features[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        
-        // 노란 경로 선
+        const coords = data.features[0].geometry.coordinates.map(c => [c[1], c[0]]); // 위도, 경도 변환
+
         const polyline = L.polyline(coords, {
           color: 'gold',
           weight: 4
         }).addTo(map);
 
-        // 동그라미 마커 초기화
+        // 지도 위치를 경로에 맞게 조정
+        map.fitBounds(polyline.getBounds());
+
+        // 동그라미 마커
         const circle = L.circleMarker(coords[0], {
-          radius: 6,
+          radius: 8,
           color: 'red',
           fillColor: 'red',
           fillOpacity: 1
         }).addTo(map);
 
+        // 애니메이션
         let index = 0;
         function animate() {
           index = (index + 1) % coords.length;
           circle.setLatLng(coords[index]);
         }
 
-        setInterval(animate, 100); // 100ms 간격으로 이동
+        setInterval(animate, 100);
       });
   </script>
 </body>
