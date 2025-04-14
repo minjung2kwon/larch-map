@@ -38,40 +38,8 @@
     attributionControl: false
   });
 
+  // GeoJSON 불러오기 및 애니메이션
   map.on('load', () => {
-    map.addSource('larch-trail', {
-      type: 'geojson',
-      data: {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: []
-          }
-        }]
-      }
-    });
-
-    map.addLayer({
-      id: 'larch-trail-line',
-      type: 'line',
-      source: 'larch-trail',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': '#FFD700',
-        'line-width': 4
-      }
-    });
-
-    animateTrail();
-  });
-
-  function animateTrail() {
-    const source = map.getSource('larch-trail');
     const geojsonUrl = 'https://dl.dropboxusercontent.com/scl/fi/52ny1so7ft1ud7nhk4pry/route.json?rlkey=w34yvo9jtxhw0jln3kilqn12c&st=j2367jlt';
 
     fetch(geojsonUrl)
@@ -79,6 +47,7 @@
       .then(data => {
         const coords = data.features[0].geometry.coordinates;
         let i = 0;
+
         const animatedLine = {
           type: 'FeatureCollection',
           features: [{
@@ -90,10 +59,29 @@
           }]
         };
 
+        map.addSource('larch-trail', {
+          type: 'geojson',
+          data: animatedLine
+        });
+
+        map.addLayer({
+          id: 'larch-trail-line',
+          type: 'line',
+          source: 'larch-trail',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#FFD700',
+            'line-width': 4
+          }
+        });
+
         function draw() {
           if (i < coords.length) {
             animatedLine.features[0].geometry.coordinates.push(coords[i]);
-            source.setData(animatedLine);
+            map.getSource('larch-trail').setData(animatedLine);
             i++;
             requestAnimationFrame(draw);
           }
@@ -101,7 +89,7 @@
 
         draw();
       });
-  }
+  });
 </script>
 
 </body>
